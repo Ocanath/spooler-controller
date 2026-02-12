@@ -34,7 +34,7 @@ target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES} OpenGL::GL)
 add_subdirectory(external/byte-stuffing)
 
 # serial-cross-platform (provides: serial)
-add_subdirectory(external/serial-cross-platform)
+# add_subdirectory(external/serial-cross-platform)
 
 # dartt-protocol (provides: dartt_protocol, dartt_checksum)
 add_subdirectory(external/dartt-protocol)
