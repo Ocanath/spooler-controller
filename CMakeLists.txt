@@ -51,6 +51,7 @@ add_executable(${PROJECT_NAME}
 	src/dartt_init.cpp
 	src/plotting.cpp
 	src/colors.cpp
+	src/ui.cpp
 )
 
 # # Debug symbols

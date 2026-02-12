@@ -33,6 +33,7 @@
 #include "checksum.h"
 
 // App
+#include "ui.h"
 #include "dartt_init.h"
 #include "plotting.h"
 
@@ -152,23 +153,6 @@ int main(int argc, char* argv[])
 			{
 				running = false;
 			}
-			if (event.type == SDL_DROPFILE)
-			{
-				char* file = event.drop.file;
-				dropped_file_path = file;
-				SDL_free(file);
-
-				if (ends_with_ci(dropped_file_path, ".elf"))
-				{
-					var_name_buf[0] = '\0';
-					elf_load_error.clear();
-					show_elf_popup = true;
-				}
-				else if (ends_with_ci(dropped_file_path, ".json"))
-				{
-					pending_json_load = true;
-				}
-			}
 		}
 
 		// Start ImGui frame
@@ -176,146 +160,8 @@ int main(int argc, char* argv[])
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
-		// --- Drag-and-drop: JSON load ---
-		if (pending_json_load)
-		{
-			pending_json_load = false;
-			// Detach external references before replacing config
-			for (size_t i = 0; i < plot.lines.size(); i++)
-			{
-				plot.lines[i].xsource = &plot.sys_sec;
-				plot.lines[i].ysource = nullptr;
-			}
-			ds.ctl_base.buf = nullptr;
-			ds.periph_base.buf = nullptr;
-			config = DarttConfig();
-
-			if (load_dartt_config(dropped_file_path.c_str(), config, plot, serial, ds))
-			{
-				if (config.nbytes > 0)
-				{
-					config.allocate_buffers();
-					ds.ctl_base.buf = config.ctl_buf.buf;
-					ds.ctl_base.len = config.ctl_buf.len;
-					ds.ctl_base.size = config.ctl_buf.size;
-					ds.periph_base.buf = config.periph_buf.buf;
-					ds.periph_base.len = config.periph_buf.len;
-					ds.periph_base.size = config.periph_buf.size;
-				}
-				config_json_path = dropped_file_path;
-				printf("Loaded config from JSON: %s\n", dropped_file_path.c_str());
-			}
-			else
-			{
-				printf("Failed to load JSON: %s\n", dropped_file_path.c_str());
-			}
-		}
-
-		// --- Drag-and-drop: ELF popup + load ---
-		if (render_elf_load_popup(&show_elf_popup, dropped_file_path, var_name_buf, sizeof(var_name_buf), elf_load_error))
-		{
-			// User clicked Load - detach external references
-			for (size_t i = 0; i < plot.lines.size(); i++)
-			{
-				plot.lines[i].xsource = &plot.sys_sec;
-				plot.lines[i].ysource = nullptr;
-			}
-			ds.ctl_base.buf = nullptr;
-			ds.periph_base.buf = nullptr;
-			config = DarttConfig();
-
-			elf_parse_error_t err = elf_parser_load_config(dropped_file_path.c_str(), var_name_buf, &config);
-
-			if (err == ELF_PARSE_SUCCESS)
-			{
-				if (config.nbytes > 0)
-				{
-					config.allocate_buffers();
-					ds.ctl_base.buf = config.ctl_buf.buf;
-					ds.ctl_base.len = config.ctl_buf.len;
-					ds.ctl_base.size = config.ctl_buf.size;
-					ds.periph_base.buf = config.periph_buf.buf;
-					ds.periph_base.len = config.periph_buf.len;
-					ds.periph_base.size = config.periph_buf.size;
-				}
-				config_json_path = dropped_file_path.substr(0, dropped_file_path.size() - 4) + ".json";
-				elf_parser_ctx tmp_parser;
-				if (elf_parser_init(&tmp_parser, dropped_file_path.c_str()) == ELF_PARSE_SUCCESS)
-				{
-					elf_parser_generate_json(&tmp_parser, var_name_buf, config_json_path.c_str());
-					elf_parser_cleanup(&tmp_parser);
-				}
-				elf_load_error.clear();
-				ImGui::CloseCurrentPopup();
-				printf("Loaded config from ELF: %s (symbol: %s)\n",
-				       dropped_file_path.c_str(), var_name_buf);
-			}
-			else
-			{
-				elf_load_error = elf_parse_error_str(err);
-			}
-		}
-
-		// Rebuild subscribed and dirty lists before read/write operations
-		collect_subscribed_fields(config.leaf_list, config.subscribed_list);
-		collect_dirty_fields(config.leaf_list, config.dirty_list);
-
-		// WRITE: Send dirty fields to device
-		if (config.ctl_buf.buf && config.periph_buf.buf) 
-		{
-			std::vector<MemoryRegion> write_queue = build_write_queue(config);
-			for (MemoryRegion& region : write_queue) {
-				sync_fields_to_ctl_buf(config, region);
-
-				dartt_buffer_t slice = {
-					.buf = config.ctl_buf.buf + region.start_offset,
-					.size = region.length,
-					.len = region.length
-				};
-
-				int rc = dartt_write_multi(&slice, &ds);
-				if (rc == DARTT_PROTOCOL_SUCCESS) {
-					clear_dirty_flags(region);
-					printf("write ok: offset=%u len=%u\n", region.start_offset, region.length);
-				} else {
-					printf("write error %d\n", rc);
-				}
-			}
-		}
-
-		// READ: Poll subscribed fields from device
-		if (config.ctl_buf.buf && config.periph_buf.buf)
-		{
-			std::vector<MemoryRegion> read_queue = build_read_queue(config);
-			for (MemoryRegion& region : read_queue) 
-			{
-				dartt_buffer_t slice = 
-				{
-					.buf = config.ctl_buf.buf + region.start_offset,
-					.size = region.length,
-					.len = region.length
-				};
-
-
-				int rc = dartt_read_multi(&slice, &ds);
-				if (rc == DARTT_PROTOCOL_SUCCESS) 
-				{
-					sync_periph_buf_to_fields(config, region);
-				} 
-				else 
-				{
-					printf("read error %d\n", rc);
-				}
-			}
-		}
-		
-		calculate_display_values(config.leaf_list);		
-
-		// Render UI
-		bool value_edited = render_live_expressions(config, plot, config_json_path, serial, ds);
 
 		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);	//map out
-		render_plotting_menu(plot, config.root, config.subscribed_list);
 		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);	//outside of class, load the time in sec as timebase for signals that use it as default
 
 		//add new frame of data to each line, as determined by UI
