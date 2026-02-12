@@ -27,9 +27,6 @@
 #include "cobs.h"
 #include "PPP.h"
 
-// serial-cross-platform
-#include "serial.h"
-
 // dartt-protocol
 #include "dartt.h"
 #include "dartt_sync.h"
