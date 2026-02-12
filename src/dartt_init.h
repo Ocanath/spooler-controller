@@ -1,7 +1,6 @@
 #ifndef DARTT_INIT_H
 #define DARTT_INIT_H
 
-#include "serial.h"
 #include "cobs.h"
 #include "dartt.h"
 #include "dartt_sync.h"
@@ -16,8 +15,7 @@ struct UdpState {
 	bool connected;
 };
 
-extern Serial serial;
-extern bool use_udp;
+
 extern UdpState udp_state;
 extern unsigned char tx_mem[SERIAL_BUFFER_SIZE];
 extern unsigned char rx_dartt_mem[SERIAL_BUFFER_SIZE];

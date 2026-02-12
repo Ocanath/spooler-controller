@@ -53,11 +53,11 @@ add_executable(${PROJECT_NAME}
 	src/colors.cpp
 )
 
-# Debug symbols
-target_compile_options(${PROJECT_NAME} PRIVATE
-    $<$<CONFIG:Debug>:-g -O0>
-    $<$<CONFIG:Release>:-O2>
-)
+# # Debug symbols
+# target_compile_options(${PROJECT_NAME} PRIVATE
+#     $<$<CONFIG:Debug>:-g -O0>
+#     $<$<CONFIG:Release>:-O2>
+# )
 
 # SDL2 (system)
 # SDL2 Setup
@@ -92,21 +92,13 @@ else()
 
 endif()
 
-# Include directories for ELF parsing
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/external/ELFIO
-    ${CMAKE_CURRENT_SOURCE_DIR}/external/libdwarf/src/lib/libdwarf
-)
 
 target_link_libraries(${PROJECT_NAME}
     imgui
     cobs
     PPP
-    serial
     dartt_protocol
     dartt_checksum
-    nlohmann_json::nlohmann_json
-    dwarf
 )
 
 # tinycsocket socket libraries (vendored, header-only with TINYCSOCKET_IMPLEMENTATION)

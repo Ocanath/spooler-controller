@@ -1,7 +1,6 @@
 #include "dartt_init.h"
 #include <cstdio>
 
-Serial serial;
 bool use_udp = false;
 UdpState udp_state = { TCS_SOCKET_INVALID, "192.168.1.100", 5000, false };
 
@@ -25,18 +24,13 @@ int tx_blocking(unsigned char addr, dartt_buffer_t * b, uint32_t timeout)
 	{
 		return rc;
 	}
-	if (use_udp)
+	if (!udp_state.connected)
 	{
-		if (!udp_state.connected)
-			return -1;
-		size_t bytes_sent = 0;
-		TcsResult res = tcs_send(udp_state.socket, cb.buf, cb.length, TCS_FLAG_NONE, &bytes_sent);
-		rc = (res == TCS_SUCCESS && bytes_sent == cb.length) ? (int)cb.length : -1;
-	}
-	else
-	{
-		rc = serial.write(cb.buf, (int)cb.length);
-	}
+		return -1;
+	}	
+	size_t bytes_sent = 0;
+	TcsResult res = tcs_send(udp_state.socket, cb.buf, cb.length, TCS_FLAG_NONE, &bytes_sent);
+	rc = (res == TCS_SUCCESS && bytes_sent == cb.length) ? (int)cb.length : -1;
 	if(rc == (int)cb.length)
 	{
 		return DARTT_PROTOCOL_SUCCESS;
@@ -57,24 +51,21 @@ int rx_blocking(dartt_buffer_t * buf, uint32_t timeout)
 	};
 
 	int rc;
-	if (use_udp)
+	if (!udp_state.connected)
 	{
-		if (!udp_state.connected)
-			return -1;
-		struct TcsAddress src;
-		size_t bytes_received = 0;
-		tcs_opt_receive_timeout_set(udp_state.socket, timeout);
-		TcsResult res = tcs_receive_from(udp_state.socket, cb_enc.buf, cb_enc.size, TCS_FLAG_NONE, &src, &bytes_received);
-		if (res == TCS_SUCCESS)
-		{
-			rc = (int)bytes_received;
-		}
-		else
-			rc = -2;
+		return -1;
+	}
+	struct TcsAddress src;
+	size_t bytes_received = 0;
+	tcs_opt_receive_timeout_set(udp_state.socket, timeout);
+	TcsResult res = tcs_receive_from(udp_state.socket, cb_enc.buf, cb_enc.size, TCS_FLAG_NONE, &src, &bytes_received);
+	if (res == TCS_SUCCESS)
+	{
+		rc = (int)bytes_received;
 	}
 	else
 	{
-		rc = serial.read_until_delimiter(cb_enc.buf, cb_enc.size, 0, timeout);
+		rc = -2;
 	}
 
 	if (rc >= 0)

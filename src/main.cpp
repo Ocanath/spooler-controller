@@ -118,13 +118,6 @@ int main(int argc, char* argv[])
 	SDL_GetWindowSize(window, &width, &height);
 	plot.init(width, height);
 	
-	// Serial connection
-	int rc = serial.autoconnect(230400);
-	if (rc != true) 
-	{
-		printf("Warning - no serial connection made\n");
-	}
-
 	if (tcs_lib_init() != TCS_SUCCESS)
 	{
 		printf("Failed to initialize tinycsocket\n");
