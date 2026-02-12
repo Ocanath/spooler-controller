@@ -37,6 +37,8 @@
 #include "dartt_init.h"
 #include "plotting.h"
 
+#include <Eigen/Dense>
+
 #include <algorithm>
 #include <string>
 
@@ -65,6 +67,7 @@ int main(int argc, char* argv[])
 	std::string elf_load_error;
 	bool pending_json_load = false;
 	std::string config_json_path = "";
+
 
 	// Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) 
@@ -128,6 +131,27 @@ int main(int argc, char* argv[])
 		printf("Initialize tinycsocket library success\n");
 	}
 
+	// ---- DELETE ME: Eigen sanity check ----
+	{
+		Eigen::Matrix3d A;
+		A << 1, 2, 3,
+				4, 5, 6,
+				7, 8, 10;
+
+		Eigen::Vector3d b(1, 0, 0);
+
+		Eigen::Vector3d x = A.inverse() * b;
+		printf("A * A.inverse() * b = ");
+		Eigen::Vector3d check = A * x;
+		printf("[%.2f, %.2f, %.2f]\n", check(0), check(1), check(2));
+
+		Eigen::Matrix3d product = A * A.transpose();
+		printf("A * A^T diagonal: [%.1f, %.1f, %.1f]\n",
+			product(0,0), product(1,1), product(2,2));
+	}
+	// ---- END DELETE ME ----
+
+		
 	// Setup dartt_sync
 	dartt_sync_t ds;
 	init_ds(&ds);

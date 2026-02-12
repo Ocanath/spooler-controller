@@ -42,6 +42,9 @@ add_subdirectory(external/dartt-protocol)
 # nlohmann/json (provides: nlohmann_json::nlohmann_json)
 # add_subdirectory(external/json)
 
+# Eigen (header-only linear algebra)
+add_subdirectory(external/eigen)
+
 # ============================================================================
 # Main Application
 # ============================================================================
@@ -100,6 +103,7 @@ target_link_libraries(${PROJECT_NAME}
     PPP
     dartt_protocol
     dartt_checksum
+    Eigen3::Eigen
 )
 
 # tinycsocket socket libraries (vendored, header-only with TINYCSOCKET_IMPLEMENTATION)
