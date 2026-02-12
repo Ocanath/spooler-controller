@@ -40,20 +40,7 @@ add_subdirectory(external/byte-stuffing)
 add_subdirectory(external/dartt-protocol)
 
 # nlohmann/json (provides: nlohmann_json::nlohmann_json)
-add_subdirectory(external/json)
-
-# libdwarf (provides: dwarf)
-# Disable components we don't need
-set(BUILD_DWARFDUMP OFF CACHE BOOL "" FORCE)
-set(BUILD_DWARFGEN OFF CACHE BOOL "" FORCE)
-set(BUILD_DWARFEXAMPLE OFF CACHE BOOL "" FORCE)
-set(DO_TESTING OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED OFF CACHE BOOL "" FORCE)
-set(BUILD_NON_SHARED ON CACHE BOOL "" FORCE)
-add_subdirectory(external/libdwarf)
-
-# ELFIO (header-only library for ELF symbol table access)
-# No build step required, just include directory
+# add_subdirectory(external/json)
 
 # ============================================================================
 # Main Application
@@ -62,10 +49,6 @@ add_subdirectory(external/libdwarf)
 add_executable(${PROJECT_NAME}
     src/main.cpp
 	src/dartt_init.cpp
-	src/config.cpp
-	src/elf_parser.cpp
-	src/ui.cpp
-	src/buffer_sync.cpp
 	src/plotting.cpp
 	src/colors.cpp
 )
