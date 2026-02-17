@@ -4,7 +4,6 @@
 bool use_udp = false;
 UdpState udp_state = { TCS_SOCKET_INVALID, "192.168.1.100", 5000, false };
 
- #define NUM_BYTES_COBS_OVERHEAD	2	//we have to tell dartt our serial buffers are smaller than they are, so the COBS layer has room to operate. This allows for functional multiple message handling with write_multi and read_multi for large configs
 
 unsigned char tx_mem[SERIAL_BUFFER_SIZE] = {};
 unsigned char rx_dartt_mem[SERIAL_BUFFER_SIZE] = {};

@@ -7,8 +7,10 @@
 #include "tinycsocket.h"
 
 #define SERIAL_BUFFER_SIZE 32
+#define NUM_BYTES_COBS_OVERHEAD	2	//we have to tell dartt our serial buffers are smaller than they are, so the COBS layer has room to operate. This allows for functional multiple message handling with write_multi and read_multi for large configs
 
-struct UdpState {
+struct UdpState 
+{
 	TcsSocket socket;
 	char ip[64];
 	uint16_t port;
@@ -24,5 +26,7 @@ extern unsigned char rx_cobs_mem[SERIAL_BUFFER_SIZE];
 void init_ds(dartt_sync_t * ds);
 bool udp_connect(UdpState* state);
 void udp_disconnect(UdpState* state);
+int tx_blocking(unsigned char addr, dartt_buffer_t * b, uint32_t timeout);
+int rx_blocking(dartt_buffer_t * buf, uint32_t timeout);
 
 #endif

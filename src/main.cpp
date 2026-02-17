@@ -41,6 +41,10 @@
 
 #include <algorithm>
 #include <string>
+#include "dartt_mctl_params.h"
+#include "motor.h"
+
+#define NUM_MOTORS 2
 
 // Helper: case-insensitive extension check
 static bool ends_with_ci(const std::string& str, const std::string& suffix) 
@@ -61,13 +65,6 @@ int main(int argc, char* argv[])
 	(void)argv;
 
 	// Drag-and-drop state
-	std::string dropped_file_path;
-	bool show_elf_popup = false;
-	char var_name_buf[128] = "";
-	std::string elf_load_error;
-	bool pending_json_load = false;
-	std::string config_json_path = "";
-
 
 	// Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) 
@@ -131,11 +128,9 @@ int main(int argc, char* argv[])
 		printf("Initialize tinycsocket library success\n");
 	}
 		
-	// Setup dartt_sync
-	dartt_sync_t ds;
-	init_ds(&ds);
-	ds.address = 0x0; // TODO: make configurable
+	
 	//allocate ds buffers
+	Motor m[NUM_MOTORS] = {Motor(0x0), Motor(0x1)};
 
 	// Main loop
 	bool running = true;

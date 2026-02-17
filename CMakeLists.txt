@@ -55,6 +55,7 @@ add_executable(${PROJECT_NAME}
 	src/plotting.cpp
 	src/colors.cpp
 	src/ui.cpp
+	src/motor.cpp
 )
 
 # # Debug symbols
