@@ -26,7 +26,7 @@ extern unsigned char rx_cobs_mem[SERIAL_BUFFER_SIZE];
 void init_ds(dartt_sync_t * ds);
 bool udp_connect(UdpState* state);
 void udp_disconnect(UdpState* state);
-int tx_blocking(unsigned char addr, dartt_buffer_t * b, uint32_t timeout);
-int rx_blocking(dartt_buffer_t * buf, uint32_t timeout);
+int tx_blocking(unsigned char addr, dartt_buffer_t * b, void * user_context, uint32_t timeout);
+int rx_blocking(dartt_buffer_t * buf, void * user_context, uint32_t timeout);
 
 #endif

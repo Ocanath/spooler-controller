@@ -131,7 +131,15 @@ int main(int argc, char* argv[])
 	
 	//allocate ds buffers
 	Motor m[NUM_MOTORS] = {Motor(0x0), Motor(0x1)};
+	snprintf(m[0].socket.ip, sizeof(m[0].socket.ip), "192.168.0.25");
+	m[0].socket.port = 5400;
+	udp_connect(&m[0].socket);
+	snprintf(m[1].socket.ip, sizeof(m[1].socket.ip), "192.168.0.26");
+	m[1].socket.port = 5400;
+	udp_connect(&m[1].socket);
 
+
+	
 	// Main loop
 	bool running = true;
 	while (running)

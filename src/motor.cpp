@@ -31,4 +31,5 @@ Motor::~Motor()
 {
 	delete[] ds.tx_buf.buf;
 	delete[] ds.rx_buf.buf;
+	udp_disconnect(&socket);
 }
