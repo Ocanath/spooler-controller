@@ -172,20 +172,24 @@ int main(int argc, char* argv[])
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
-		read_range.buf = m[0].ds.ctl_base.buf;
-		int rc = dartt_read_multi(&read_range, &m[0].ds);
-		if(rc == DARTT_PROTOCOL_SUCCESS)
+		bool comms_good = true;
+		for(int i = 0; i < NUM_MOTORS; i++)
 		{
-			printf("m1: %d\r\n", m[0].dp_periph.theta_rem_m);
+			read_range.buf = m[i].ds.ctl_base.buf;		//register on the ctl base we need to read into
+			int rc = dartt_read_multi(&read_range, &m[i].ds);
+			if(rc != DARTT_PROTOCOL_SUCCESS)
+			{
+				//send stop condition - even forces on both spools
+				comms_good = false;
+			}	
 		}
-		read_range.buf = m[1].ds.ctl_base.buf;
-		rc = dartt_read_multi(&read_range, &m[1].ds);
-		if(rc == DARTT_PROTOCOL_SUCCESS)
+		if(comms_good)
 		{
-			printf("m0: %d\r\n", m[1].dp_periph.theta_rem_m);
+			printf("%d,%d\r\n", m[0].dp_periph.theta_rem_m, m[0].dp_periph.theta_rem_m);
 		}
-		
 	
+
+
 		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);	//map out
 		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);	//outside of class, load the time in sec as timebase for signals that use it as default
 
