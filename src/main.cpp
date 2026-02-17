@@ -196,8 +196,8 @@ int main(int argc, char* argv[])
 				comms_good = false;
 			}	
 		}
-		double t1 = 200.;
-		double t2 = 200.;
+		double t1 = 0;
+		double t2 = 0;
 		if(comms_good == false)
 		{
 		}
@@ -207,15 +207,37 @@ int main(int argc, char* argv[])
 			p1 = m[0].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
 			p2 = m[1].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
 
-			printf("%f, %d, %f, %d\r\n", p1, m[0].dp_periph.iq, p2, m[1].dp_periph.iq);
+			// printf("%f, %d, %f, %d\r\n", p1, m[0].dp_periph.iq, p2, m[1].dp_periph.iq);
+			int mouse_x, mouse_y;
+			SDL_GetMouseState(&mouse_x, &mouse_y);
+			int w,h;
+			SDL_GetWindowSize(window, &w, &h);		
+			float wf = ((float)w)/2.f;
+			float hf = ((float)h)/2.f;
+			double xf = ((float)mouse_x - wf)/wf;
+			double yf = ((float)mouse_y - hf)/hf;
+			if(xf > 0.1)
+			{
+				t1 = xf*600;
+				t2 = 100;
+			}
+			else if(xf < -0.1)
+			{
+				t2 = -xf*600;
+				t1 = 100;
+			}
+			else
+			{
+				t1 = 200;
+				t2 = 200;
+			}
+			printf("%f,%f\n",t1,t2);
 
-
-			
-
-			t1 = thresh_dbl(t1, 400., 200.);
-			t2 = thresh_dbl(t2, 400., 200.);
+			t1 = thresh_dbl(t1, 600., 200.);
+			t2 = thresh_dbl(t2, 600., 200.);
 			m[0].dp_ctl.command_word = (int32_t)t1;
 			m[1].dp_ctl.command_word = (int32_t)t2;	
+
 		}
 
 
@@ -227,6 +249,10 @@ int main(int argc, char* argv[])
 				.len = sizeof(uint32_t)
 			};
 			int rc = dartt_write_multi(&write, &m[i].ds);
+			if(rc != 0)
+			{
+				printf("write failure\r\n");
+			}
 		}
 
 
