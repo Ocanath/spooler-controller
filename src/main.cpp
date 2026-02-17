@@ -185,7 +185,10 @@ int main(int argc, char* argv[])
 		}
 		if(comms_good)
 		{
-			printf("%d,%d\r\n", m[0].dp_periph.theta_rem_m, m[1].dp_periph.theta_rem_m);
+			double p1,p2;
+			p1 = m[0].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
+			p2 = m[1].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
+			printf("%f,%f\r\n", p1, p2);
 		}
 	
 
