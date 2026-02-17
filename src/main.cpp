@@ -59,6 +59,19 @@ static bool ends_with_ci(const std::string& str, const std::string& suffix)
 }
 
 
+double thresh_dbl(double in, double hi, double lo)
+{
+	if(in > hi)
+	{
+		return hi;
+	}
+	else if(in < lo)
+	{
+		return lo;
+	}
+	return in;
+}
+
 int main(int argc, char* argv[])
 {
 	(void)argc;
@@ -183,14 +196,34 @@ int main(int argc, char* argv[])
 				comms_good = false;
 			}	
 		}
-		if(comms_good)
+		double t1 = 200.;
+		double t2 = 200.;
+		if(comms_good == false)
+		{
+		}
+		else
 		{
 			double p1,p2;
 			p1 = m[0].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
 			p2 = m[1].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
-			printf("%f,%f\r\n", p1, p2);
+
+			printf("%f, %d, %f, %d\r\n", p1, m[0].dp_periph.iq, p2, m[1].dp_periph.iq);
 		}
-	
+
+		m[0].dp_ctl.command_word = (int32_t)t1;
+		m[1].dp_ctl.command_word = (int32_t)t2;
+		thresh_dbl(t1, 400., 200.);
+
+		for(int i = 0; i < NUM_MOTORS; i++)
+		{
+			dartt_buffer_t write = {
+				.buf = m[i].ds.ctl_base.buf,
+				.size = sizeof(uint32_t),
+				.len = sizeof(uint32_t)
+			};
+			int rc = dartt_write_multi(&write, &m[i].ds);
+		}
+
 
 
 		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);	//map out
