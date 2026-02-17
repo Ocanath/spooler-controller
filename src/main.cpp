@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
 		
 	
 	//allocate ds buffers
-	Motor m[NUM_MOTORS] = {Motor(0x0), Motor(0x1)};
+	Motor m[NUM_MOTORS] = {Motor(0x1), Motor(0x0)};
 	snprintf(m[0].socket.ip, sizeof(m[0].socket.ip), "192.168.0.25");
 	m[0].socket.port = 5400;
 	udp_connect(&m[0].socket);
@@ -139,7 +139,13 @@ int main(int argc, char* argv[])
 	udp_connect(&m[1].socket);
 
 
-	
+	dartt_buffer_t read_range = 
+	{
+		.buf = m[0].ds.ctl_base.buf,
+		.size = m[0].ds.ctl_base.size,
+		.len = sizeof(uint32_t)*4
+	};
+
 	// Main loop
 	bool running = true;
 	while (running)
@@ -166,7 +172,20 @@ int main(int argc, char* argv[])
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
-
+		read_range.buf = m[0].ds.ctl_base.buf;
+		int rc = dartt_read_multi(&read_range, &m[0].ds);
+		if(rc == DARTT_PROTOCOL_SUCCESS)
+		{
+			printf("m1: %d\r\n", m[0].dp_periph.theta_rem_m);
+		}
+		read_range.buf = m[1].ds.ctl_base.buf;
+		rc = dartt_read_multi(&read_range, &m[1].ds);
+		if(rc == DARTT_PROTOCOL_SUCCESS)
+		{
+			printf("m0: %d\r\n", m[1].dp_periph.theta_rem_m);
+		}
+		
+	
 		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);	//map out
 		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);	//outside of class, load the time in sec as timebase for signals that use it as default
 

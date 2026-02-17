@@ -13,12 +13,12 @@ struct UdpState
 {
 	TcsSocket socket;
 	char ip[64];
+	unsigned char rx_cobs_mem[64];
 	uint16_t port;
 	bool connected;
 };
 
 
-extern UdpState udp_state;
 extern unsigned char tx_mem[SERIAL_BUFFER_SIZE];
 extern unsigned char rx_dartt_mem[SERIAL_BUFFER_SIZE];
 extern unsigned char rx_cobs_mem[SERIAL_BUFFER_SIZE];

@@ -1,17 +1,10 @@
 #include "dartt_init.h"
 #include <cstdio>
 
-bool use_udp = false;
-UdpState udp_state = { TCS_SOCKET_INVALID, "192.168.1.100", 5000, false };
-
-
-unsigned char tx_mem[SERIAL_BUFFER_SIZE] = {};
-unsigned char rx_dartt_mem[SERIAL_BUFFER_SIZE] = {};
-unsigned char rx_cobs_mem[SERIAL_BUFFER_SIZE] = {};
-
-
 int tx_blocking(unsigned char addr, dartt_buffer_t * b, void * user_context, uint32_t timeout)
 {
+ 	UdpState* udp_state = (UdpState*)(user_context);
+
 	cobs_buf_t cb = {
 		.buf = b->buf,
 		.size = b->size,
@@ -23,12 +16,12 @@ int tx_blocking(unsigned char addr, dartt_buffer_t * b, void * user_context, uin
 	{
 		return rc;
 	}
-	if (!udp_state.connected)
+	if (!udp_state->connected)
 	{
 		return -1;
 	}	
 	size_t bytes_sent = 0;
-	TcsResult res = tcs_send(udp_state.socket, cb.buf, cb.length, TCS_FLAG_NONE, &bytes_sent);
+	TcsResult res = tcs_send(udp_state->socket, cb.buf, cb.length, TCS_FLAG_NONE, &bytes_sent);
 	rc = (res == TCS_SUCCESS && bytes_sent == cb.length) ? (int)cb.length : -1;
 	if(rc == (int)cb.length)
 	{
@@ -42,22 +35,24 @@ int tx_blocking(unsigned char addr, dartt_buffer_t * b, void * user_context, uin
 
 int rx_blocking(dartt_buffer_t * buf, void * user_context, uint32_t timeout)
 {
+	UdpState* udp_state = (UdpState*)(user_context);
+
 	cobs_buf_t cb_enc =
 	{
-		.buf = rx_cobs_mem,
-		.size = sizeof(rx_cobs_mem),
+		.buf = udp_state->rx_cobs_mem,
+		.size = sizeof(udp_state->rx_cobs_mem),
 		.length = 0
 	};
 
 	int rc;
-	if (!udp_state.connected)
+	if (!udp_state->connected)
 	{
 		return -1;
 	}
 	struct TcsAddress src;
 	size_t bytes_received = 0;
-	tcs_opt_receive_timeout_set(udp_state.socket, timeout);
-	TcsResult res = tcs_receive_from(udp_state.socket, cb_enc.buf, cb_enc.size, TCS_FLAG_NONE, &src, &bytes_received);
+	tcs_opt_receive_timeout_set(udp_state->socket, timeout);
+	TcsResult res = tcs_receive_from(udp_state->socket, cb_enc.buf, cb_enc.size, TCS_FLAG_NONE, &src, &bytes_received);
 	if (res == TCS_SUCCESS)
 	{
 		rc = (int)bytes_received;
@@ -98,23 +93,6 @@ int rx_blocking(dartt_buffer_t * buf, void * user_context, uint32_t timeout)
 		return DARTT_PROTOCOL_SUCCESS;
 	}
     
-}
-
-void init_ds(dartt_sync_t * ds)
-{
-	ds->address = 0;	//must be mapped
-	ds->ctl_base = {};	//must be assigned
-	ds->periph_base = {};	//must be assigned
-	ds->msg_type = TYPE_SERIAL_MESSAGE;
-	ds->tx_buf.buf = tx_mem;
-	ds->tx_buf.size = sizeof(tx_mem) - NUM_BYTES_COBS_OVERHEAD;		//DO NOT CHANGE. This is for a good reason. See above note
-	ds->tx_buf.len = 0;
-	ds->rx_buf.buf = rx_dartt_mem;
-	ds->rx_buf.size = sizeof(rx_dartt_mem) - NUM_BYTES_COBS_OVERHEAD;	//DO NOT CHANGE. This is for a good reason. See above note
-	ds->rx_buf.len = 0;
-	ds->blocking_tx_callback = &tx_blocking;
-	ds->blocking_rx_callback = &rx_blocking;
-	ds->timeout_ms = 10;
 }
 
 bool udp_connect(UdpState* state)

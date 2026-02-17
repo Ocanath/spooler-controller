@@ -11,14 +11,12 @@ class Motor
 {
 public:
 	dartt_mctl_params_t dp_ctl;
+	dartt_mctl_params_t dp_periph;
 	dartt_sync_t ds;
 	UdpState socket;
 
 	Motor(unsigned char addr);
-	~Motor();
-private:
-	dartt_mctl_params_t dp_periph;
-	
+	~Motor();	
 };
 
 #endif
