@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 		}
 		if(comms_good)
 		{
-			printf("%d,%d\r\n", m[0].dp_periph.theta_rem_m, m[0].dp_periph.theta_rem_m);
+			printf("%d,%d\r\n", m[0].dp_periph.theta_rem_m, m[1].dp_periph.theta_rem_m);
 		}
 	
 
