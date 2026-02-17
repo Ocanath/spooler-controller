@@ -208,11 +208,16 @@ int main(int argc, char* argv[])
 			p2 = m[1].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
 
 			printf("%f, %d, %f, %d\r\n", p1, m[0].dp_periph.iq, p2, m[1].dp_periph.iq);
+
+
+			
+
+			t1 = thresh_dbl(t1, 400., 200.);
+			t2 = thresh_dbl(t2, 400., 200.);
+			m[0].dp_ctl.command_word = (int32_t)t1;
+			m[1].dp_ctl.command_word = (int32_t)t2;	
 		}
 
-		m[0].dp_ctl.command_word = (int32_t)t1;
-		m[1].dp_ctl.command_word = (int32_t)t2;
-		thresh_dbl(t1, 400., 200.);
 
 		for(int i = 0; i < NUM_MOTORS; i++)
 		{
