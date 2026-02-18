@@ -66,8 +66,7 @@ void render_socket_ui(SpoolerRobot& robot)
             udp_connect(&m.socket);
 
         int port = m.socket.port;
-        if (ImGui::InputInt("Port", &port, 0, 0,
-                            ImGuiInputTextFlags_EnterReturnsTrue))
+        if (ImGui::InputInt("Port", &port, 0, 0))
         {
             if (port > 0 && port <= 65535)
             { m.socket.port = (uint16_t)port; udp_connect(&m.socket); }
