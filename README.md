@@ -83,7 +83,7 @@ Then reload your shell (`source ~/.bashrc`).
 #### 2. Install SDK packages
 
 ```bash
-sdkmanager --install "platform-tools" "platforms;android-34" "ndk;26.1.10909125" "build-tools;34.0.0"
+sdkmanager --install "platform-tools" "platforms;android-34" "ndk;26.1.10909125" "build-tools;34.0.0" "cmake;3.22.1"
 ```
 
 Accept the licenses when prompted:
@@ -108,6 +108,7 @@ This file is gitignored since the path is machine-specific.
 cd android
 ./gradlew assembleDebug
 ```
+
 
 The first build will take a while because Gradle downloads its own dependencies and compiles SDL2 + the entire project from source for each target architecture (arm64, x86_64).
 

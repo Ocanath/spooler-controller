@@ -8,3 +8,4 @@ android/app/.cxx/
 android/local.properties
 *.apk
 *.aab
+***.lock
