@@ -25,11 +25,16 @@ bool init_imgui(SDL_Window* window, SDL_GLContext gl_context)
         return false;
     }
 
-    if (!ImGui_ImplOpenGL3_Init("#version 130")) 
+    if (!ImGui_ImplOpenGL3_Init(nullptr))
 	{
         fprintf(stderr, "Failed to init ImGui OpenGL3 backend\n");
         return false;
     }
+
+#ifdef __ANDROID__
+    io.ConfigFlags |= ImGuiConfigFlags_IsTouchScreen;
+    ImGui::GetStyle().TouchExtraPadding = ImVec2(8.0f, 8.0f);
+#endif
 
     return true;
 }

@@ -5,6 +5,10 @@
 #include <cstdint>
 #include "colors.h"
 
+// Forward-declare GL types to avoid pulling in GL headers here
+typedef unsigned int GLuint;
+typedef int GLint;
+
 struct fpoint_t
 {
 	float x;
@@ -29,7 +33,7 @@ public:
 	float * ysource;	//pointer to the y variable which we source for our data stream
 
 	/*
-		Data is formatted and 
+		Data is formatted and
 	*/
 	timemode_t mode;
 
@@ -50,7 +54,7 @@ public:
 	Line(int capacity);
 
 	bool enqueue_data(int screen_width);
-	
+
 };
 
 class Plotter
@@ -63,6 +67,7 @@ public:
 	std::vector<Line> lines;
 
 	Plotter();
+	~Plotter();
 
 	// Initialize the plotter with dimensions and number of widths for buffer
 	bool init(int width, int height);
@@ -71,6 +76,17 @@ public:
 
 	// Render all lines directly to OpenGL framebuffer
 	void render();
+
+private:
+	GLuint m_vbo;
+	GLuint m_ebo;
+	GLuint m_vao;
+	GLuint m_shader;
+	GLint m_u_proj;
+	bool m_gl_ready;
+
+	bool init_gl_resources();
+	void teardown_gl_resources();
 };
 
 #endif // PLOTTING_H

@@ -10,3 +10,6 @@
 [submodule "external/eigen"]
 	path = external/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "external/SDL2-src"]
+	path = external/SDL2-src
+	url = https://github.com/libsdl-org/SDL

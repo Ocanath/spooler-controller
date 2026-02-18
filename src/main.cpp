@@ -16,7 +16,11 @@
 #include <SDL.h>
 
 // OpenGL
+#if defined(__ANDROID__) || defined(IMGUI_IMPL_OPENGL_ES3)
+#include <GLES3/gl3.h>
+#else
 #include <GL/gl.h>
+#endif
 
 // ImGui
 #include "imgui.h"
@@ -79,8 +83,13 @@ int main(int argc, char* argv[])
 
 	// Drag-and-drop state
 
+	// Touch-as-mouse hint (needed for Android touch input via SDL_GetMouseState)
+#ifdef __ANDROID__
+	SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");
+#endif
+
 	// Initialize SDL
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) 
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
 	{
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		return -1;
@@ -88,19 +97,29 @@ int main(int argc, char* argv[])
 
 	// GL attributes
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+#ifdef __ANDROID__
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#endif
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
 	// Create window
+	Uint32 window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+#ifdef __ANDROID__
+	window_flags |= SDL_WINDOW_FULLSCREEN;
+#endif
 	SDL_Window* window = SDL_CreateWindow(
 		"DARTT Dashboard",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		1280, 720,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
+		window_flags
 	);
 	
 	if (!window) 

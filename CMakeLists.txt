@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22) # Dawn requires CMake >= 3.22
+cmake_minimum_required(VERSION 3.22)
 project(spooler_controller C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -8,10 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # External Dependencies
 # ============================================================================
 
-
-
-# OpenGL
-find_package(OpenGL REQUIRED)
+# OpenGL (not needed on Android — uses GLESv3)
+if(NOT ANDROID)
+    find_package(OpenGL REQUIRED)
+endif()
 
 # ImGui (no CMakeLists.txt, add manually)
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
@@ -26,9 +26,14 @@ add_library(imgui STATIC
 target_include_directories(imgui PUBLIC
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends
-    ${SDL2_INCLUDE_DIRS}
 )
-target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES} OpenGL::GL)
+if(ANDROID)
+    target_compile_definitions(imgui PUBLIC IMGUI_IMPL_OPENGL_ES3)
+    target_link_libraries(imgui PUBLIC SDL2 GLESv3 EGL)
+else()
+    target_include_directories(imgui PUBLIC ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES} OpenGL::GL)
+endif()
 
 # byte-stuffing (provides: cobs, PPP)
 add_subdirectory(external/byte-stuffing)
@@ -49,55 +54,76 @@ add_subdirectory(external/eigen)
 # Main Application
 # ============================================================================
 
-add_executable(${PROJECT_NAME}
+set(APP_SOURCES
     src/main.cpp
-	src/dartt_init.cpp
-	src/plotting.cpp
-	src/colors.cpp
-	src/ui.cpp
-	src/motor.cpp
+    src/dartt_init.cpp
+    src/plotting.cpp
+    src/colors.cpp
+    src/ui.cpp
+    src/motor.cpp
 )
 
-# # Debug symbols
-# target_compile_options(${PROJECT_NAME} PRIVATE
-#     $<$<CONFIG:Debug>:-g -O0>
-#     $<$<CONFIG:Release>:-O2>
-# )
+# ============================================================================
+# Platform-specific SDL2 + target setup
+# ============================================================================
+if(ANDROID)
+    # Build SDL2 from source (required for Android)
+    add_subdirectory(external/SDL2-src)
 
-# SDL2 (system)
-# SDL2 Setup
-if(WIN32)
+    # Android loads shared libraries, not executables
+    add_library(${PROJECT_NAME} SHARED ${APP_SOURCES})
+
+    target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_IMPL_OPENGL_ES3)
+
+    # Android NDK lacks linux/if_packet.h
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TCS_MISSING_AF_PACKET)
+
+    target_link_libraries(${PROJECT_NAME}
+        SDL2::SDL2
+        SDL2::SDL2main
+        GLESv3
+        EGL
+        android
+        log
+    )
+
+    # Ensure SDL_main is linked
+    target_link_options(${PROJECT_NAME} PRIVATE "-u" "SDL_main")
+
+elseif(WIN32)
+    add_executable(${PROJECT_NAME} ${APP_SOURCES})
+
     # Path to your local SDL2 copy
     set(SDL2_DIR "${CMAKE_SOURCE_DIR}/external/SDL")
 
     # Determine the target architecture
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        # 64-bit architecture
         set(SDL2_LIB_DIR "${SDL2_DIR}/lib/x64")
     else()
-        # 32-bit architecture
         set(SDL2_LIB_DIR "${SDL2_DIR}/lib/x86")
     endif()
 
-    # Include SDL2 headers
     include_directories(${SDL2_DIR}/include)
-    
-    # Link SDL2 libraries
-	target_link_libraries(${PROJECT_NAME}
-		${SDL2_LIB_DIR}/SDL2main.lib
-		${SDL2_LIB_DIR}/SDL2.lib
-	)
+
+    target_link_libraries(${PROJECT_NAME}
+        ${SDL2_LIB_DIR}/SDL2main.lib
+        ${SDL2_LIB_DIR}/SDL2.lib
+    )
+
+    # tinycsocket socket libraries
+    target_link_libraries(${PROJECT_NAME} wsock32 ws2_32 iphlpapi)
 
 else()
-    # Find SDL2 on other platforms
+    # Linux
+    add_executable(${PROJECT_NAME} ${APP_SOURCES})
+
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIRS})
-	target_link_libraries(${PROJECT_NAME}	
-		${SDL2_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
 
 endif()
 
-
+# Common libraries for all platforms
 target_link_libraries(${PROJECT_NAME}
     imgui
     cobs
@@ -106,8 +132,3 @@ target_link_libraries(${PROJECT_NAME}
     dartt_checksum
     Eigen3::Eigen
 )
-
-# tinycsocket socket libraries (vendored, header-only with TINYCSOCKET_IMPLEMENTATION)
-if(WIN32)
-    target_link_libraries(${PROJECT_NAME} wsock32 ws2_32 iphlpapi)
-endif()
