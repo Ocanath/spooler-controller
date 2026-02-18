@@ -302,7 +302,8 @@ int main(int argc, char* argv[])
 	// Save UI settings back to config
 	// save_dartt_config("config.json", config);
 
-	// Cleanup
+	// Cleanup — teardown GL resources before destroying the context
+	plot.teardown_gl_resources();
 	shutdown_imgui();
 	SDL_GL_DeleteContext(gl_context);
 	SDL_DestroyWindow(window);

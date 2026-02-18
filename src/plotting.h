@@ -77,6 +77,9 @@ public:
 	// Render all lines directly to OpenGL framebuffer
 	void render();
 
+	// Free GL resources (call before destroying GL context)
+	void teardown_gl_resources();
+
 private:
 	GLuint m_vbo;
 	GLuint m_ebo;
@@ -86,7 +89,6 @@ private:
 	bool m_gl_ready;
 
 	bool init_gl_resources();
-	void teardown_gl_resources();
 };
 
 #endif // PLOTTING_H
