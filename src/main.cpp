@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < num_motors; i++)
 	{
 		plot.lines[i].xsource = &plot.sys_sec;
-		plot.lines[i].ysource = robot.iq.data() + i;
+		plot.lines[i].ysource = &robot.iq[i];
 		plot.lines[i].color   = template_colors[(i+1) % (sizeof(template_colors)/sizeof(rgb_t))];
 	}
 
