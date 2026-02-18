@@ -104,11 +104,18 @@ This file is gitignored since the path is machine-specific.
 
 #### 4. Build the APK
 
+Create the gradlew script if not present using:
+
 ```bash
 cd android
-./gradlew assembleDebug
+gradle wrapper
 ```
 
+Then from within the android directory, build using:
+
+```bash
+./gradlew assembleDebug
+```
 
 The first build will take a while because Gradle downloads its own dependencies and compiles SDL2 + the entire project from source for each target architecture (arm64, x86_64).
 
