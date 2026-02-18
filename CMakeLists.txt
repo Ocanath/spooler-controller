@@ -70,15 +70,16 @@ if(ANDROID)
     # Build SDL2 from source (required for Android)
     add_subdirectory(external/SDL2-src)
 
-    # Android loads shared libraries, not executables
-    add_library(${PROJECT_NAME} SHARED ${APP_SOURCES})
+    # SDLActivity always loads "libmain.so" — library must be named "main"
+    add_library(main SHARED ${APP_SOURCES})
+    set(APP_TARGET main)
 
-    target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_IMPL_OPENGL_ES3)
+    target_compile_definitions(main PRIVATE IMGUI_IMPL_OPENGL_ES3)
 
     # Android NDK lacks linux/if_packet.h
-    target_compile_definitions(${PROJECT_NAME} PRIVATE TCS_MISSING_AF_PACKET)
+    target_compile_definitions(main PRIVATE TCS_MISSING_AF_PACKET)
 
-    target_link_libraries(${PROJECT_NAME}
+    target_link_libraries(main
         SDL2::SDL2
         SDL2::SDL2main
         GLESv3
@@ -88,9 +89,13 @@ if(ANDROID)
     )
 
     # Ensure SDL_main is linked
-    target_link_options(${PROJECT_NAME} PRIVATE "-u" "SDL_main")
+    target_link_options(main PRIVATE "-u" "SDL_main")
+
+    # Android 15+ requires 16KB-aligned ELF load segments
+    target_link_options(main PRIVATE "-Wl,-z,max-page-size=16384")
 
 elseif(WIN32)
+    set(APP_TARGET ${PROJECT_NAME})
     add_executable(${PROJECT_NAME} ${APP_SOURCES})
 
     # Path to your local SDL2 copy
@@ -115,6 +120,7 @@ elseif(WIN32)
 
 else()
     # Linux
+    set(APP_TARGET ${PROJECT_NAME})
     add_executable(${PROJECT_NAME} ${APP_SOURCES})
 
     find_package(SDL2 REQUIRED)
@@ -124,7 +130,7 @@ else()
 endif()
 
 # Common libraries for all platforms
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${APP_TARGET}
     imgui
     cobs
     PPP
