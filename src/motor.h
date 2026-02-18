@@ -16,7 +16,12 @@ public:
 	UdpState socket;
 
 	Motor(unsigned char addr);
-	~Motor();	
+	~Motor();
+
+	Motor(Motor&& other) noexcept;
+	Motor& operator=(Motor&& other) noexcept;
+	Motor(const Motor&) = delete;
+	Motor& operator=(const Motor&) = delete;
 };
 
 #endif

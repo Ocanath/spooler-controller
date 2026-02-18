@@ -40,3 +40,34 @@ Motor::~Motor()
 	delete[] ds.rx_buf.buf;
 	udp_disconnect(&socket);
 }
+
+Motor::Motor(Motor&& other) noexcept
+    : dp_ctl(other.dp_ctl), dp_periph(other.dp_periph),
+      ds(other.ds), socket(other.socket)
+{
+    ds.ctl_base.buf    = (unsigned char*)(&dp_ctl);
+    ds.periph_base.buf = (unsigned char*)(&dp_periph);
+    ds.user_context_tx = (void*)(&socket);
+    ds.user_context_rx = (void*)(&socket);
+    other.ds.tx_buf.buf = nullptr;
+    other.ds.rx_buf.buf = nullptr;
+    other.socket.socket    = TCS_SOCKET_INVALID;
+    other.socket.connected = false;
+}
+
+Motor& Motor::operator=(Motor&& other) noexcept
+{
+    if (this == &other) return *this;
+    delete[] ds.tx_buf.buf;
+    delete[] ds.rx_buf.buf;
+    udp_disconnect(&socket);
+    dp_ctl = other.dp_ctl; dp_periph = other.dp_periph;
+    ds = other.ds; socket = other.socket;
+    ds.ctl_base.buf    = (unsigned char*)(&dp_ctl);
+    ds.periph_base.buf = (unsigned char*)(&dp_periph);
+    ds.user_context_tx = (void*)(&socket);
+    ds.user_context_rx = (void*)(&socket);
+    other.ds.tx_buf.buf = nullptr; other.ds.rx_buf.buf = nullptr;
+    other.socket.socket = TCS_SOCKET_INVALID; other.socket.connected = false;
+    return *this;
+}

@@ -47,8 +47,7 @@
 #include <string>
 #include "dartt_mctl_params.h"
 #include "motor.h"
-
-#define NUM_MOTORS 2
+#include "spooler_robot.h"
 
 // Helper: case-insensitive extension check
 static bool ends_with_ci(const std::string& str, const std::string& suffix) 
@@ -151,14 +150,6 @@ int main(int argc, char* argv[])
 	int height = 0;
 	SDL_GetWindowSize(window, &width, &height);
 	plot.init(width, height);
-	plot.lines.resize(NUM_MOTORS);
-	float iq[NUM_MOTORS] = {};
-	for(int i = 0; i < plot.lines.size(); i++)
-	{
-		plot.lines[i].xsource = &plot.sys_sec;
-		plot.lines[i].ysource = &iq[i];	//assign ysource to tye float array above
-		plot.lines[i].color = template_colors[(i+1) % (sizeof(template_colors)/sizeof(rgb_t))];
-	}
 
 	if (tcs_lib_init() != TCS_SUCCESS)
 	{
@@ -168,24 +159,20 @@ int main(int argc, char* argv[])
 	{
 		printf("Initialize tinycsocket library success\n");
 	}
-		
-	
-	//allocate ds buffers
-	Motor m[NUM_MOTORS] = {Motor(0x1), Motor(0x0)};
-	snprintf(m[0].socket.ip, sizeof(m[0].socket.ip), "192.168.0.25");
-	m[0].socket.port = 5400;
-	udp_connect(&m[0].socket);
-	snprintf(m[1].socket.ip, sizeof(m[1].socket.ip), "192.168.0.26");
-	m[1].socket.port = 5400;
-	udp_connect(&m[1].socket);
 
+	SpoolerRobot robot;
+	robot.motors.reserve(2);
+	robot.add_motor(0x1, "192.168.0.25", 5400);
+	robot.add_motor(0x0, "192.168.0.26", 5400);
 
-	dartt_buffer_t read_range = 
+	int num_motors = (int)robot.motors.size();
+	plot.lines.resize(num_motors);
+	for (int i = 0; i < num_motors; i++)
 	{
-		.buf = m[0].ds.ctl_base.buf,
-		.size = m[0].ds.ctl_base.size,
-		.len = sizeof(uint32_t)*4
-	};
+		plot.lines[i].xsource = &plot.sys_sec;
+		plot.lines[i].ysource = robot.iq.data() + i;
+		plot.lines[i].color   = template_colors[(i+1) % (sizeof(template_colors)/sizeof(rgb_t))];
+	}
 
 	// Main loop
 	bool running = true;
@@ -213,82 +200,49 @@ int main(int argc, char* argv[])
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
-		bool comms_good = true;
-		for(int i = 0; i < NUM_MOTORS; i++)
-		{
-			read_range.buf = m[i].ds.ctl_base.buf;		//register on the ctl base we need to read into
-			int rc = dartt_read_multi(&read_range, &m[i].ds);
-			if(rc != DARTT_PROTOCOL_SUCCESS)
-			{
-				//send stop condition - even forces on both spools
-				comms_good = false;
-			}	
-		}
-		double t1 = 0;
-		double t2 = 0;
-		if(comms_good == false)
-		{
-		}
-		else
-		{
-			double p1,p2;
-			p1 = m[0].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
-			p2 = m[1].dp_periph.theta_rem_m * 180 / ((double)(1<<14) * 3.14159265);
+		// --- Read ---
+		bool comms_good = robot.read();
 
-			// printf("%f, %d, %f, %d\r\n", p1, m[0].dp_periph.iq, p2, m[1].dp_periph.iq);
+		// --- Controller (mouse → tensions) ---
+		double t1 = 0, t2 = 0;
+		if (comms_good)
+		{
 			int mouse_x, mouse_y;
 			SDL_GetMouseState(&mouse_x, &mouse_y);
-			int w,h;
-			SDL_GetWindowSize(window, &w, &h);		
-			float wf = ((float)w)/2.f;
-			float hf = ((float)h)/2.f;
-			double xf = ((float)mouse_x - wf)/wf;
-			double yf = ((float)mouse_y - hf)/hf;
-			if(xf > 0.1)
-			{
-				t1 = xf*600;
-				t2 = 100;
+			int w, h;
+			SDL_GetWindowSize(window, &w, &h);
+			double xf = ((float)mouse_x - w/2.f) / (w/2.f);
+			if(xf >  0.1) 
+			{ 
+				t1 = xf*600;  
+				t2 = 100; 
 			}
-			else if(xf < -0.1)
-			{
-				t2 = -xf*600;
-				t1 = 100;
+			else if (xf < -0.1) 
+			{ 
+				t2 = -xf*600; 
+				t1 = 100; 
 			}
 			else
-			{
+			{ 
 				t1 = 200;
-				t2 = 200;
+				t2 = 200; 
 			}
-			// printf("%f,%f\n",t1,t2);
-
 			t1 = thresh_dbl(t1, 600., 100.);
 			t2 = thresh_dbl(t2, 600., 100.);
-			m[0].dp_ctl.command_word = (int32_t)t1;
-			m[1].dp_ctl.command_word = (int32_t)t2;	
-
 		}
+		robot.t[0] = t1;
+		robot.t[1] = t2;
 
+		// --- Write ---
+		robot.write();
 
-		for(int i = 0; i < NUM_MOTORS; i++)
+		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);
+		for (int i = 0; i < (int)plot.lines.size(); i++)
 		{
-			dartt_buffer_t write = {
-				.buf = m[i].ds.ctl_base.buf,
-				.size = sizeof(uint32_t),
-				.len = sizeof(uint32_t)
-			};
-			int rc = dartt_write_multi(&write, &m[i].ds);
-			if(rc != 0)
-			{
-				printf("write failure\r\n");
-			}
+			plot.lines[i].yscale  =  (float)plot.window_height / 610.f;
+			plot.lines[i].yoffset = -(float)plot.window_height / 3.f;
 		}
-		for(int i = 0; i < NUM_MOTORS; i++)
-		{
-			iq[i] = (float)m[i].dp_periph.iq * ((float)plot.window_height)/610.f - (float)plot.window_height/3;
-		}
-		
-		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);	//map out
-		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);	//outside of class, load the time in sec as timebase for signals that use it as default
+		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);
 
 		//add new frame of data to each line, as determined by UI
 		for(int i = 0; i < plot.lines.size(); i++)
@@ -298,6 +252,8 @@ int main(int argc, char* argv[])
 		
 
 		// Render
+		render_socket_ui(robot);
+		render_telemetry_ui(robot);
 		ImGui::Render();
 		int display_w, display_h;
 		SDL_GetWindowSize(window, &display_w, &display_h);

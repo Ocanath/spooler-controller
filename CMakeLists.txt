@@ -61,6 +61,7 @@ set(APP_SOURCES
     src/colors.cpp
     src/ui.cpp
     src/motor.cpp
+    src/spooler_robot.cpp
 )
 
 # ============================================================================
