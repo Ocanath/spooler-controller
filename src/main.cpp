@@ -146,11 +146,20 @@ int main(int argc, char* argv[])
 	}
 
 	Plotter plot;
+
 	int width = 0;
 	int height = 0;
 	SDL_GetWindowSize(window, &width, &height);
 	plot.init(width, height);
-	
+	plot.lines.resize(NUM_MOTORS);
+	float iq[NUM_MOTORS] = {};
+	for(int i = 0; i < plot.lines.size(); i++)
+	{
+		plot.lines[i].xsource = &plot.sys_sec;
+		plot.lines[i].ysource = &iq[i];	//assign ysource to tye float array above
+		plot.lines[i].color = template_colors[(i+1) % (sizeof(template_colors)/sizeof(rgb_t))];
+	}
+
 	if (tcs_lib_init() != TCS_SUCCESS)
 	{
 		printf("Failed to initialize tinycsocket\n");
@@ -250,7 +259,7 @@ int main(int argc, char* argv[])
 				t1 = 200;
 				t2 = 200;
 			}
-			printf("%f,%f\n",t1,t2);
+			// printf("%f,%f\n",t1,t2);
 
 			t1 = thresh_dbl(t1, 600., 100.);
 			t2 = thresh_dbl(t2, 600., 100.);
@@ -273,9 +282,11 @@ int main(int argc, char* argv[])
 				printf("write failure\r\n");
 			}
 		}
-
-
-
+		for(int i = 0; i < NUM_MOTORS; i++)
+		{
+			iq[i] = (float)m[i].dp_periph.iq * ((float)plot.window_height)/610.f - (float)plot.window_height/3;
+		}
+		
 		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);	//map out
 		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);	//outside of class, load the time in sec as timebase for signals that use it as default
 
