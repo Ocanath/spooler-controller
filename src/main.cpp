@@ -233,8 +233,8 @@ int main(int argc, char* argv[])
 			}
 			printf("%f,%f\n",t1,t2);
 
-			t1 = thresh_dbl(t1, 600., 200.);
-			t2 = thresh_dbl(t2, 600., 200.);
+			t1 = thresh_dbl(t1, 600., 100.);
+			t2 = thresh_dbl(t2, 600., 100.);
 			m[0].dp_ctl.command_word = (int32_t)t1;
 			m[1].dp_ctl.command_word = (int32_t)t2;	
 
