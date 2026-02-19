@@ -20,8 +20,12 @@ public:
 	float kd;
 	float x;
 	float tmax;
-	
 	float targ;
+
+
+	bool do_oscillation;
+	float prev_time;
+
 
     SpoolerRobot() = default;
     SpoolerRobot(const SpoolerRobot&) = delete;
@@ -39,6 +43,8 @@ public:
 
 	//send one-time fixed theta offset to motors
 	bool write_zero_offset();
+
+	void oscillate(float time);
 };
 
 #endif

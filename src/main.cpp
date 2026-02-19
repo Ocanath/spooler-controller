@@ -168,6 +168,7 @@ int main(int argc, char* argv[])
 	robot.k = 0.5;
 	robot.kd = 3.0;
 	robot.tmax = 600;
+	robot.prev_time = 0;
 
 
 	int num_motors = (int)robot.motors.size();
@@ -304,6 +305,11 @@ int main(int argc, char* argv[])
 			plot.lines[i].enqueue_data(plot.window_width);
 		}
 		
+		
+		if(robot.do_oscillation)
+		{
+			robot.oscillate(plot.sys_sec);
+		}
 
 		// Render
 		render_socket_ui(robot);

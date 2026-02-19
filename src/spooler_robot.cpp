@@ -91,3 +91,21 @@ bool SpoolerRobot::write_zero_offset()
 	}
 	return pass;
 }
+
+
+void SpoolerRobot::oscillate(float time)
+{
+	float elapsed_time = time - prev_time;
+	if(elapsed_time > 3)
+	{
+		prev_time = time;
+		if(targ > -10000)
+		{
+			targ = -20000;
+		}
+		else
+		{
+			targ = -2000;
+		}
+	}
+}
