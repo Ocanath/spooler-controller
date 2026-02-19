@@ -173,6 +173,8 @@ int main(int argc, char* argv[])
 		plot.lines[i].ysource = &robot.iq[i];
 		plot.lines[i].color   = template_colors[(i+1) % (sizeof(template_colors)/sizeof(rgb_t))];
 	}
+	int numkeys = 0;
+	const uint8_t * keys = SDL_GetKeyboardState(&numkeys);
 
 	// Main loop
 	bool running = true;
@@ -205,21 +207,37 @@ int main(int argc, char* argv[])
 
 		// --- Controller (mouse → tensions) ---
 		double t1 = 0, t2 = 0;
+		const float t1max = 600;
 		if (comms_good)
 		{
 			int mouse_x, mouse_y;
 			SDL_GetMouseState(&mouse_x, &mouse_y);
 			int w, h;
 			SDL_GetWindowSize(window, &w, &h);
+			
 			double xf = ((float)mouse_x - w/2.f) / (w/2.f);
+
+			SDL_PumpEvents();
+			if(SDL_SCANCODE_SPACE < numkeys)
+			{
+				if(keys[SDL_SCANCODE_SPACE])
+				{
+					double k = 0.05;
+					double targ = -10e3;
+					xf = k*(targ - robot.p[0]);
+				}
+			}
+			
+
+
 			if(xf >  0.1) 
 			{ 
-				t1 = xf*600;  
+				t1 = xf*t1max;  
 				t2 = 100; 
 			}
 			else if (xf < -0.1) 
 			{ 
-				t2 = -xf*600; 
+				t2 = -xf*t1max; 
 				t1 = 100; 
 			}
 			else
@@ -227,8 +245,8 @@ int main(int argc, char* argv[])
 				t1 = 200;
 				t2 = 200; 
 			}
-			t1 = thresh_dbl(t1, 600., 100.);
-			t2 = thresh_dbl(t2, 600., 100.);
+			t1 = thresh_dbl(t1, t1max, 100.);
+			t2 = thresh_dbl(t2, t1max, 100.);
 		}
 		robot.t[0] = t1;
 		robot.t[1] = t2;
@@ -239,7 +257,7 @@ int main(int argc, char* argv[])
 		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);
 		for (int i = 0; i < (int)plot.lines.size(); i++)
 		{
-			plot.lines[i].yscale  =  (float)plot.window_height / 610.f;
+			plot.lines[i].yscale  =  (float)plot.window_height / (t1max*1.1f);
 			plot.lines[i].yoffset = -(float)plot.window_height / 3.f;
 		}
 		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);
