@@ -36,6 +36,9 @@ public:
 
     // Convert t → command_word (int32_t) for each motor; write via dartt_write_multi.
     void write();
+
+	//send one-time fixed theta offset to motors
+	bool write_zero_offset();
 };
 
 #endif

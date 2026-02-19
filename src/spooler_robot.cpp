@@ -60,3 +60,34 @@ void SpoolerRobot::write()
             printf("write failure motor %d\r\n", i);
     }
 }
+
+bool SpoolerRobot::write_zero_offset()
+{
+	bool pass = true;
+	for(int i = 0; i < (int)motors.size(); i++)
+	{
+		
+		dartt_buffer_t word = {
+			.buf = (unsigned char *)(&motors[i].dp_ctl.unwrap_state.unwrapped_angle),
+			.size = sizeof(uint32_t)*4,
+			.len = sizeof(int32_t)*4
+		};
+		
+		int rc = dartt_read_multi(&word, &motors[i].ds);
+		if(rc != DARTT_PROTOCOL_SUCCESS)
+		{
+			pass = false;
+		}
+		else
+		{
+			motors[i].dp_ctl.unwrap_state.unwrapped_angle = 0;	//clear any windup
+			motors[i].dp_ctl.theta_offset = wrap_2pi_fixed(motors[i].dp_periph.unwrap_state.unwrapped_angle, TWO_PI_14B);	//
+			rc = dartt_write_multi(&word, &motors[i].ds);
+			if(rc != DARTT_PROTOCOL_SUCCESS)
+			{
+				pass = false;
+			}
+		}
+	}
+	return pass;
+}

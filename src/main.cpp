@@ -165,8 +165,8 @@ int main(int argc, char* argv[])
 	robot.add_motor(0x1, "192.168.0.25", 5400);
 	robot.add_motor(0x0, "192.168.0.26", 5400);
 	robot.targ = -10e3;
-	robot.k = 0;
-	robot.kd = 0;
+	robot.k = 0.5;
+	robot.kd = 3.0;
 	robot.tmax = 600;
 
 

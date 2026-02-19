@@ -62,6 +62,7 @@ set(APP_SOURCES
     src/ui.cpp
     src/motor.cpp
     src/spooler_robot.cpp
+	src/trig_fixed.c
 )
 
 # ============================================================================

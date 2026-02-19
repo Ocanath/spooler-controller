@@ -102,10 +102,33 @@ void render_telemetry_ui(SpoolerRobot& robot)
 	ImGui::Text("kd");
 	ImGui::SameLine();
 	ImGui::InputScalar("##derivative_gain", ImGuiDataType_Float, &robot.kd);
+
 	ImGui::Text("tmax");
 	ImGui::SameLine();
 	ImGui::InputScalar("##tmax", ImGuiDataType_Float, &robot.tmax);
+
+	ImGui::Text("targ");
+	ImGui::SameLine();
+	ImGui::InputScalar("##targ", ImGuiDataType_Float, &robot.targ);
 	
+
+	if(ImGui::Button("Rezero"))
+	{
+		// printf("Do rezero subroutine\n");
+		for(int i = 0; i < 100; i++)
+		{
+			bool worked = robot.write_zero_offset();
+			if(worked)
+			{
+				continue;
+			}
+			else
+			{
+				printf("Fail code %d", i);
+			}
+			SDL_Delay(10);
+		}
+	}
 	
     ImGui::End();
 }
