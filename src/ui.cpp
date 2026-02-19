@@ -118,13 +118,13 @@ void render_telemetry_ui(SpoolerRobot& robot)
 		for(int i = 0; i < 100; i++)
 		{
 			bool worked = robot.write_zero_offset();
-			if(worked)
+			if(worked == true)
 			{
 				continue;
 			}
 			else
 			{
-				printf("Fail code %d", i);
+				printf("Fail iteration %d\n", i);
 			}
 			SDL_Delay(10);
 		}
