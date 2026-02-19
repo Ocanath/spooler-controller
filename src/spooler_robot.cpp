@@ -16,8 +16,14 @@ void SpoolerRobot::add_motor(unsigned char addr, const char* ip, uint16_t port)
     udp_connect(&m.socket);
 
     int n = (int)motors.size();
-    p.conservativeResize(n);  iq.conservativeResize(n);  t.conservativeResize(n);
-    p[n-1] = 0.0;  iq[n-1] = 0.0f;  t[n-1] = 0.0;
+    p.conservativeResize(n); 
+	iq.conservativeResize(n);  
+	t.conservativeResize(n);
+	dp.conservativeResize(n);
+    p[n-1] = 0.0;  
+	iq[n-1] = 0.0f;
+	t[n-1] = 0.0;
+	dp[n-1] = 0.0;
 }
 
 bool SpoolerRobot::read()
@@ -35,6 +41,7 @@ bool SpoolerRobot::read()
 
         p[i]  = motors[i].dp_periph.theta_rem_m * THETA_SCALE;
         iq[i] = (float)motors[i].dp_periph.iq;
+		dp[i] = (float)motors[i].dp_periph.dtheta_fixedpoint_rad_p_sec / 16.f;
     }
     return ok;
 }

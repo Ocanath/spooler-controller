@@ -164,6 +164,11 @@ int main(int argc, char* argv[])
 	robot.motors.reserve(2);
 	robot.add_motor(0x1, "192.168.0.25", 5400);
 	robot.add_motor(0x0, "192.168.0.26", 5400);
+	robot.targ = -10e3;
+	robot.k = 0;
+	robot.kd = 0;
+	robot.tmax = 600;
+
 
 	int num_motors = (int)robot.motors.size();
 	plot.lines.resize(num_motors);
@@ -178,6 +183,8 @@ int main(int argc, char* argv[])
 
 	// Main loop
 	bool running = true;
+	bool do_pctl = false;
+	uint8_t prev_space_state = 0;
 	while (running)
 	{
 		// Poll events
@@ -207,7 +214,7 @@ int main(int argc, char* argv[])
 
 		// --- Controller (mouse → tensions) ---
 		double t1 = 0, t2 = 0;
-		const float t1max = 600;
+		
 		if (comms_good)
 		{
 			int mouse_x, mouse_y;
@@ -220,33 +227,62 @@ int main(int argc, char* argv[])
 			SDL_PumpEvents();
 			if(SDL_SCANCODE_SPACE < numkeys)
 			{
-				if(keys[SDL_SCANCODE_SPACE])
+				if(keys[SDL_SCANCODE_SPACE] != 0 && prev_space_state == 0)
 				{
-					double k = 0.05;
-					double targ = -10e3;
-					xf = k*(targ - robot.p[0]);
+					do_pctl = !do_pctl;
+					if(do_pctl)
+					{
+						printf("Pctl active\n");
+					}
+					else
+					{
+						printf("Pctl inactive\n");
+					}
 				}
+				prev_space_state = keys[SDL_SCANCODE_SPACE];
 			}
-			
 
+			if(do_pctl)
+			{
+				float velocity = (robot.dp[0] - robot.dp[1]);
+				xf = robot.k*(robot.targ - robot.p[0]) - robot.kd * velocity;
+				if(xf > 0)
+				{
+					t1 = xf;
+					t2 = 100;
+				}
+				else if(xf < 0)
+				{
+					t2 = -xf;
+					t1 = 100;
+				}
+				else
+				{
+					t1 = 100;
+					t2 = 100;
+				}
 
-			if(xf >  0.1) 
-			{ 
-				t1 = xf*t1max;  
-				t2 = 100; 
-			}
-			else if (xf < -0.1) 
-			{ 
-				t2 = -xf*t1max; 
-				t1 = 100; 
 			}
 			else
-			{ 
-				t1 = 200;
-				t2 = 200; 
+			{
+				if(xf >  0.1) 
+				{ 
+					t1 = xf*robot.tmax;  
+					t2 = 100; 
+				}
+				else if (xf < -0.1) 
+				{ 
+					t2 = -xf*robot.tmax; 
+					t1 = 100; 
+				}
+				else
+				{ 
+					t1 = 200;
+					t2 = 200; 
+				}
 			}
-			t1 = thresh_dbl(t1, t1max, 100.);
-			t2 = thresh_dbl(t2, t1max, 100.);
+			t1 = thresh_dbl(t1, robot.tmax, 100.);
+			t2 = thresh_dbl(t2, robot.tmax, 100.);
 		}
 		robot.t[0] = t1;
 		robot.t[1] = t2;
@@ -257,7 +293,7 @@ int main(int argc, char* argv[])
 		SDL_GetWindowSize(window, &plot.window_width, &plot.window_height);
 		for (int i = 0; i < (int)plot.lines.size(); i++)
 		{
-			plot.lines[i].yscale  =  (float)plot.window_height / (t1max*1.1f);
+			plot.lines[i].yscale  =  (float)plot.window_height / (robot.tmax*1.1f);
 			plot.lines[i].yoffset = -(float)plot.window_height / 3.f;
 		}
 		plot.sys_sec = (float)(((double)SDL_GetTicks64())/1000.);

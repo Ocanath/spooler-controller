@@ -80,20 +80,32 @@ void render_socket_ui(SpoolerRobot& robot)
 void render_telemetry_ui(SpoolerRobot& robot)
 {
     ImGui::Begin("Telemetry");
-    if (ImGui::BeginTable("telem", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+    if (ImGui::BeginTable("telem", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
     {
         ImGui::TableSetupColumn("Motor");
         ImGui::TableSetupColumn("Pos (deg)");
         ImGui::TableSetupColumn("Iq");
-        ImGui::TableHeadersRow();
+        ImGui::TableSetupColumn("dQ");
         for (int i = 0; i < (int)robot.motors.size(); i++)
         {
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::Text("%d", i);
             ImGui::TableSetColumnIndex(1); ImGui::Text("%.3f", robot.p[i]);
             ImGui::TableSetColumnIndex(2); ImGui::Text("%.1f", (double)robot.iq[i]);
+			ImGui::TableSetColumnIndex(3); ImGui::Text("%.3f", robot.dp[i]);
         }
         ImGui::EndTable();
     }
+	ImGui::Text("k");
+	ImGui::SameLine();
+	ImGui::InputScalar("##pctl_gain", ImGuiDataType_Float, &robot.k);
+	ImGui::Text("kd");
+	ImGui::SameLine();
+	ImGui::InputScalar("##derivative_gain", ImGuiDataType_Float, &robot.kd);
+	ImGui::Text("tmax");
+	ImGui::SameLine();
+	ImGui::InputScalar("##tmax", ImGuiDataType_Float, &robot.tmax);
+	
+	
     ImGui::End();
 }

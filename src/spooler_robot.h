@@ -14,6 +14,14 @@ public:
     Eigen::VectorXd p;   // angular positions (degrees), size = motors.size()
     Eigen::VectorXf iq;  // q-axis currents (float — plotter pointer compat)
     Eigen::VectorXd t;   // tension commands (set by controller before write())
+	Eigen::VectorXf dp;	//angular velocity
+
+	float k;
+	float kd;
+	float x;
+	float tmax;
+	
+	float targ;
 
     SpoolerRobot() = default;
     SpoolerRobot(const SpoolerRobot&) = delete;
