@@ -157,7 +157,7 @@ void SpoolerRobot::calibrate(void)
 			SDL_Delay(10);
 		}
 	}
-	rom_degrees = p[0] - p[1];
+	rom_degrees = p[0];
 	printf("...Stopped. Using rom %f\n", rom_degrees);
 
 }
