@@ -113,41 +113,48 @@ float abs_f(float input)
 void SpoolerRobot::calibrate(void)
 {
 	printf("Starting calibration...\n");
-	float start = time_sec();
-	bool speed_triggered = false;
-	while(time_sec() - start < 10)
-	{
-		read();
-		t[0] = 400.f;
-		t[1] = 100.f;
-		printf("t = (%f, %f)\n",iq[0], iq[1]);
-		float velocity = (dp[0] - dp[1]);
-		if(velocity > 100 && speed_triggered == false)
+	for(int m = 0; m < motors.size(); m++)
+	{	
+		float start = time_sec();
+		bool speed_triggered = false;
+		while(time_sec() - start < 5)
 		{
-			speed_triggered = true;
-		}
-		if(speed_triggered && abs_f(velocity) < 1)
-		{
-			printf("writing zero\n");
-			for(int i = 0; i < 1000; i++)
-			{
-				bool rc = motors[0].write_zero_offset();
-				if(rc == true)
-				{
-					i = 1000;
-					continue;
-				}
-				else
-				{
-					printf("Fail to write motor0 attempt: %d\n", i);
-				}
-			}
-			printf("Done writing zero\n");
-			break;
-		}
-		write();
+			read();
 
-		SDL_Delay(10);
+			t[0] = 100.f;
+			t[1] = 100.f;			
+			t[m] = 400.f;
+
+			printf("t = (%f, %f)\n",iq[0], iq[1]);
+			float velocity = (dp[0] - dp[1]);
+
+			if(dp[m] > 50 && speed_triggered == false)
+			{
+				speed_triggered = true;
+			}
+			if(speed_triggered && abs_f(velocity) < 1)
+			{
+				printf("writing zero\n");
+				for(int i = 0; i < 1000; i++)
+				{
+					bool rc = motors[m].write_zero_offset();
+					if(rc == true)
+					{
+						i = 1000;
+						continue;
+					}
+					else
+					{
+						printf("Fail to write motor0 attempt: %d\n", i);
+					}
+				}
+				printf("Done writing zero\n");
+				break;
+			}
+			write();
+
+			SDL_Delay(10);
+		}
 	}
 	printf("...Stopped\n");
 
