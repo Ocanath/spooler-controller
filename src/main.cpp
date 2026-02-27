@@ -251,16 +251,18 @@ int main(int argc, char* argv[])
 				{
 					t1 = xf;
 					t2 = 100;
+					// t2 = 300 + robot.dp[1];
 				}
 				else if(xf < 0)
 				{
 					t2 = -xf;
 					t1 = 100;
+					// t1 = 300 + robot.dp[0];
 				}
 				else
 				{
-					t1 = 100;
-					t2 = 100;
+					t1 = 200;
+					t2 = 200;
 				}
 
 			}

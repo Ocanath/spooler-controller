@@ -4,6 +4,7 @@
 #include "dartt_sync.h"
 #include <cstdio>
 #include <cstring>
+#include "SDL.h"
 
 static constexpr double THETA_SCALE = 180.0 / ((double)(1 << 14) * 3.14159265);
 
@@ -75,10 +76,6 @@ bool SpoolerRobot::write_zero_offsets()
 	return pass;
 }
 
-
-
-
-
 void SpoolerRobot::oscillate(float time)
 {
 	float elapsed_time = time - prev_time;
@@ -94,4 +91,64 @@ void SpoolerRobot::oscillate(float time)
 			targ = -2000;
 		}
 	}
+}
+
+float time_sec(void)
+{
+	return (float)(((double)SDL_GetTicks64())/1000.);	
+}
+
+float abs_f(float input)
+{
+	if(input < 0)
+	{
+		return -input;
+	}
+	else
+	{
+		return input;
+	}
+}
+
+void SpoolerRobot::calibrate(void)
+{
+	printf("Starting calibration...\n");
+	float start = time_sec();
+	bool speed_triggered = false;
+	while(time_sec() - start < 10)
+	{
+		read();
+		t[0] = 400.f;
+		t[1] = 100.f;
+		printf("t = (%f, %f)\n",iq[0], iq[1]);
+		float velocity = (dp[0] - dp[1]);
+		if(velocity > 100 && speed_triggered == false)
+		{
+			speed_triggered = true;
+		}
+		if(speed_triggered && abs_f(velocity) < 1)
+		{
+			printf("writing zero\n");
+			for(int i = 0; i < 1000; i++)
+			{
+				bool rc = motors[0].write_zero_offset();
+				if(rc == true)
+				{
+					i = 1000;
+					continue;
+				}
+				else
+				{
+					printf("Fail to write motor0 attempt: %d\n", i);
+				}
+			}
+			printf("Done writing zero\n");
+			break;
+		}
+		write();
+
+		SDL_Delay(10);
+	}
+	printf("...Stopped\n");
+
 }

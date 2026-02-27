@@ -42,7 +42,11 @@ public:
     void write();
 
 	//send one-time fixed theta offset to motors
-	bool write_zero_offsets();
+	bool write_zero_offsets(void);
+
+	//fixed behavior subroutine to obtain zero offsets and ROM
+	void calibrate(void);	
+
 
 	void oscillate(float time);
 };

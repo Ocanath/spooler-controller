@@ -129,6 +129,12 @@ void render_telemetry_ui(SpoolerRobot& robot)
 			SDL_Delay(10);
 		}
 	}
+	
+	if(ImGui::Button("Calibrate"))
+	{
+		robot.calibrate();
+	}
+
 	if(ImGui::Button("Do Oscillate"))
 	{
 		robot.do_oscillation = !robot.do_oscillation;
