@@ -77,9 +77,16 @@ void render_socket_ui(SpoolerRobot& robot)
     ImGui::End();
 }
 
-void render_telemetry_ui(SpoolerRobot& robot)
+void render_telemetry_ui(SpoolerRobot& robot, int & mode)
 {
     ImGui::Begin("Telemetry");
+
+	ImGui::RadioButton("FORCE", &mode, FORCE_MODE);
+	ImGui::SameLine();
+	ImGui::RadioButton("PCTL TYPED", &mode, PCTL_TYPED);
+	ImGui::SameLine();
+	ImGui::RadioButton("PCTL CURSOR", &mode, PCTL_CURSOR);
+	
     if (ImGui::BeginTable("telem", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
     {
         ImGui::TableSetupColumn("Motor");

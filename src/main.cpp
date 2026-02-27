@@ -169,6 +169,7 @@ int main(int argc, char* argv[])
 	robot.kd = 3.0;
 	robot.tmax = 600;
 	robot.prev_time = 0;
+	robot.rom_degrees = -21000;
 
 
 	int num_motors = (int)robot.motors.size();
@@ -186,6 +187,9 @@ int main(int argc, char* argv[])
 	bool running = true;
 	bool do_pctl = false;
 	uint8_t prev_space_state = 0;
+	
+	int mode = FORCE_MODE;
+	bool clicked = false;
 	while (running)
 	{
 		// Poll events
@@ -202,6 +206,14 @@ int main(int argc, char* argv[])
 				event.window.windowID == SDL_GetWindowID(window))
 			{
 				running = false;
+			}
+			if(event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_FINGERDOWN)
+			{
+				clicked = true;
+			}
+			if(event.type == SDL_MOUSEBUTTONUP || event.type == SDL_FINGERUP)
+			{
+				clicked = false;
 			}
 		}
 
@@ -223,39 +235,36 @@ int main(int argc, char* argv[])
 			int w, h;
 			SDL_GetWindowSize(window, &w, &h);
 			
-			double xf = ((float)mouse_x - w/2.f) / (w/2.f);
+			double xpos = ((float)mouse_x - w/2.f) / (w/2.f);
 
-			SDL_PumpEvents();
-			if(SDL_SCANCODE_SPACE < numkeys)
+			SDL_PumpEvents();	//needed for keystrokes
+			if(mode == FORCE_MODE)
 			{
-				if(keys[SDL_SCANCODE_SPACE] != 0 && prev_space_state == 0)
-				{
-					do_pctl = !do_pctl;
-					if(do_pctl)
-					{
-						printf("Pctl active\n");
-					}
-					else
-					{
-						printf("Pctl inactive\n");
-					}
-				}
-				prev_space_state = keys[SDL_SCANCODE_SPACE];
+				do_pctl = false;
 			}
-
+			else
+			{
+				do_pctl = true;
+			}
+			
 			if(do_pctl)
 			{
-				float velocity = (robot.dp[0] - robot.dp[1]);
-				xf = robot.k*(robot.targ - robot.p[0]) - robot.kd * velocity;
-				if(xf > 0)
+				robot.targ = thresh_dbl(robot.targ, 0, robot.rom_degrees);
+				if(mode == PCTL_CURSOR && clicked)
 				{
-					t1 = xf;
+					robot.targ = ((xpos+1.f)/2.f)*robot.rom_degrees;
+				}
+				float velocity = (robot.dp[0] - robot.dp[1]);
+				float f = robot.k*(robot.targ - robot.p[0]) - robot.kd * velocity;
+				if(f > 0)
+				{
+					t1 = f;
 					t2 = 100;
 					// t2 = 300 + robot.dp[1];
 				}
-				else if(xf < 0)
+				else if(f < 0)
 				{
-					t2 = -xf;
+					t2 = -f;
 					t1 = 100;
 					// t1 = 300 + robot.dp[0];
 				}
@@ -266,16 +275,16 @@ int main(int argc, char* argv[])
 				}
 
 			}
-			else
+			else if(clicked)
 			{
-				if(xf >  0.1) 
+				if(xpos >  0.1) 
 				{ 
-					t1 = xf*robot.tmax;  
+					t1 = xpos*robot.tmax;  
 					t2 = 100; 
 				}
-				else if (xf < -0.1) 
+				else if (xpos < -0.1) 
 				{ 
-					t2 = -xf*robot.tmax; 
+					t2 = -xpos*robot.tmax; 
 					t1 = 100; 
 				}
 				else
@@ -315,7 +324,7 @@ int main(int argc, char* argv[])
 
 		// Render
 		render_socket_ui(robot);
-		render_telemetry_ui(robot);
+		render_telemetry_ui(robot, mode);
 		ImGui::Render();
 		int display_w, display_h;
 		SDL_GetWindowSize(window, &display_w, &display_h);
