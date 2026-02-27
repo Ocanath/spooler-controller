@@ -112,24 +112,24 @@ void render_telemetry_ui(SpoolerRobot& robot)
 	ImGui::InputScalar("##targ", ImGuiDataType_Float, &robot.targ);
 	
 
-	if(ImGui::Button("Rezero"))
-	{
-		// printf("Do rezero subroutine\n");
-		for(int i = 0; i < 100; i++)
-		{
-			bool worked = robot.write_zero_offsets();
-			if(worked == true)
-			{
-				continue;
-			}
-			else
-			{
-				printf("Fail iteration %d\n", i);
-			}
-			SDL_Delay(10);
-		}
-	}
-	
+	// if(ImGui::Button("Rezero"))
+	// {
+	// 	// printf("Do rezero subroutine\n");
+	// 	for(int i = 0; i < 100; i++)
+	// 	{
+	// 		bool worked = robot.write_zero_offsets();
+	// 		if(worked == true)
+	// 		{
+	// 			continue;
+	// 		}
+	// 		else
+	// 		{
+	// 			printf("Fail iteration %d\n", i);
+	// 		}
+	// 		SDL_Delay(10);
+	// 	}
+	// }
+
 	if(ImGui::Button("Calibrate"))
 	{
 		robot.calibrate();

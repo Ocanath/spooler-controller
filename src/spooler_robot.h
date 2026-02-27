@@ -15,6 +15,9 @@ public:
     Eigen::VectorXf iq;  // q-axis currents (float — plotter pointer compat)
     Eigen::VectorXd t;   // tension commands (set by controller before write())
 	Eigen::VectorXf dp;	//angular velocity
+	
+	
+	float rom_degrees;	//range of motion in degrees - for a line, of just motor[0]
 
 	float k;
 	float kd;

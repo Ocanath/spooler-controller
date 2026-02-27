@@ -21,6 +21,7 @@ void SpoolerRobot::add_motor(unsigned char addr, const char* ip, uint16_t port)
 	iq.conservativeResize(n);  
 	t.conservativeResize(n);
 	dp.conservativeResize(n);
+	
     p[n-1] = 0.0;  
 	iq[n-1] = 0.0f;
 	t[n-1] = 0.0;
@@ -156,6 +157,7 @@ void SpoolerRobot::calibrate(void)
 			SDL_Delay(10);
 		}
 	}
-	printf("...Stopped\n");
+	rom_degrees = p[0];
+	printf("...Stopped. Using rom %f\n", rom_degrees);
 
 }
