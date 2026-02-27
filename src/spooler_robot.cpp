@@ -61,7 +61,7 @@ void SpoolerRobot::write()
     }
 }
 
-bool SpoolerRobot::write_zero_offset()
+bool SpoolerRobot::write_zero_offsets()
 {
 	bool pass = true;
 	for(int i = 0; i < (int)motors.size(); i++)
@@ -74,6 +74,9 @@ bool SpoolerRobot::write_zero_offset()
 	}
 	return pass;
 }
+
+
+
 
 
 void SpoolerRobot::oscillate(float time)

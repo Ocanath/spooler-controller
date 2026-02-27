@@ -117,7 +117,7 @@ void render_telemetry_ui(SpoolerRobot& robot)
 		// printf("Do rezero subroutine\n");
 		for(int i = 0; i < 100; i++)
 		{
-			bool worked = robot.write_zero_offset();
+			bool worked = robot.write_zero_offsets();
 			if(worked == true)
 			{
 				continue;

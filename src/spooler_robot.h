@@ -42,7 +42,7 @@ public:
     void write();
 
 	//send one-time fixed theta offset to motors
-	bool write_zero_offset();
+	bool write_zero_offsets();
 
 	void oscillate(float time);
 };
