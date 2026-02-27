@@ -55,6 +55,9 @@ Motor::Motor(Motor&& other) noexcept
     other.socket.connected = false;
 }
 
+
+
+
 Motor& Motor::operator=(Motor&& other) noexcept
 {
     if (this == &other) return *this;
@@ -70,4 +73,32 @@ Motor& Motor::operator=(Motor&& other) noexcept
     other.ds.tx_buf.buf = nullptr; other.ds.rx_buf.buf = nullptr;
     other.socket.socket = TCS_SOCKET_INVALID; other.socket.connected = false;
     return *this;
+}
+
+bool Motor::write_zero_offset(void)
+{
+	bool pass = true;
+
+	dartt_buffer_t word = {
+		.buf = (unsigned char *)(&dp_ctl.unwrap_state.unwrapped_angle),
+		.size = sizeof(uint32_t)*4,
+		.len = sizeof(int32_t)*4
+	};
+		
+	int rc = dartt_read_multi(&word, &ds);
+	if(rc != DARTT_PROTOCOL_SUCCESS)
+	{
+		pass = false;
+	}
+	else
+	{
+		dp_ctl.unwrap_state.unwrapped_angle = 0;	//clear any windup
+		dp_ctl.theta_offset = wrap_2pi_fixed(dp_periph.unwrap_state.unwrapped_angle, TWO_PI_14B);	//
+		rc = dartt_write_multi(&word, &ds);
+		if(rc != DARTT_PROTOCOL_SUCCESS)
+		{
+			pass = false;
+		}
+	}
+	return pass;
 }

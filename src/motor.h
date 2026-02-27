@@ -22,6 +22,8 @@ public:
 	Motor& operator=(Motor&& other) noexcept;
 	Motor(const Motor&) = delete;
 	Motor& operator=(const Motor&) = delete;
+
+	bool write_zero_offset(void);
 };
 
 #endif
